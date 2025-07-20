@@ -60,8 +60,8 @@ HMTL_TEMPLATE = """
         input[type="submit"]:hover, #crop-button:hover { background-color: var(--button-primary-hover-bg); }
         .download-btn { background-color: var(--button-success-bg); }
         .download-btn:hover { background-color: var(--button-success-hover-bg); }
-        #new-qr-button { background-color: var(--button-secondary-bg); }
-        #new-qr-button:hover { background-color: var(--button-secondary-hover-bg); }
+        #new-qr-button { background-color: var(--button-success-bg); }
+        #new-qr-button:hover { background-color: var(--button-success-hover-bg); }
 
         .qr-container {
             margin-top: 25px;
