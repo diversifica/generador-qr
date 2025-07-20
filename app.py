@@ -33,24 +33,25 @@ HMTL_TEMPLATE = """
             --box-shadow: 0 4px 20px rgba(0,0,0,0.1);
         }
         .dark-mode {
-            --bg-color: #2c2c2c;
-            --container-bg: #3a3a3a;
-            --text-color: #f0f0f0;
-            --label-color: #e0e0e0;
-            --input-bg: #4a4a4a;
-            --input-border: #666;
-            --button-primary-bg: #4a90e2;
-            --button-primary-hover-bg: #357bd8;
+            --bg-color: #1a1a1a;
+            --container-bg: #242424;
+            --text-color: #f8f8f8;
+            --label-color: #cccccc;
+            --input-bg: #333333;
+            --input-border: #555555;
+            --button-primary-bg: #2979ff;
+            --button-primary-hover-bg: #1565c0;
             --button-secondary-bg: #555;
             --button-secondary-hover-bg: #444;
-            --button-success-bg: #4CAF50;
-            --button-success-hover-bg: #45a049;
-            --box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            --button-success-bg: #2e7d32;
+            --button-success-hover-bg: #1b5e20;
+            --box-shadow: 0 4px 20px rgba(0,0,0,0.5);
         }
 
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background-color: var(--bg-color); transition: background-color 0.3s ease; }
-        .container { background: var(--container-bg); padding: 40px; border-radius: 12px; box-shadow: var(--box-shadow); text-align: center; width: 90%; max-width: 500px; transition: background-color 0.3s ease, box-shadow 0.3s ease; }
-        h1 { color: var(--text-color); transition: color 0.3s ease; }
+        .container { background: var(--container-bg); padding: 40px; border-radius: 12px; box-shadow: var(--box-shadow); width: 90%; max-width: 500px; transition: background-color 0.3s ease, box-shadow 0.3s ease; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        h1 { color: var(--text-color); margin: 0; font-size: 1.4rem; transition: color 0.3s ease; }
         label { font-weight: 500; color: var(--label-color); display: block; margin: 15px 0 5px; transition: color 0.3s ease; }
         input[type="text"], input[type="file"] { width: calc(100% - 24px); padding: 12px; margin-bottom: 10px; border: 1px solid var(--input-border); border-radius: 6px; font-size: 16px; background-color: var(--input-bg); color: var(--text-color); transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease; }
         .color-selectors { display: flex; justify-content: center; gap: 20px; margin: 10px 0; }
@@ -59,7 +60,6 @@ HMTL_TEMPLATE = """
         input[type="submit"], .download-btn, #crop-button, #new-qr-button, #generate-export-button { color: white; padding: 12px 25px; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; text-decoration: none; display: inline-block; transition: background-color 0.3s ease; }
         input[type="submit"], #crop-button { background-color: var(--button-primary-bg); }
         input[type="submit"]:hover, #crop-button:hover { background-color: var(--button-primary-hover-bg); }
-<<<<<<< HEAD
         .download-btn, #new-qr-button, #generate-export-button { background-color: var(--button-success-bg); }
         .download-btn:hover, #new-qr-button:hover, #generate-export-button:hover { background-color: var(--button-success-hover-bg); }
 
@@ -83,8 +83,7 @@ HMTL_TEMPLATE = """
             display: flex;
             align-items: center;
             justify-content: flex-end;
-            margin-bottom: 20px;
-            width: 100%;
+            width: auto;
         }
         .theme-switch {
             display: inline-block;
@@ -121,14 +120,16 @@ HMTL_TEMPLATE = """
 </head>
 <body>
     <div class="container">
-        <div class="theme-switch-wrapper">
-            <label class="theme-switch" for="checkbox">
-                <input type="checkbox" id="checkbox" />
-                <div class="slider round"></div>
-            </label>
-            <em style="margin-left: 10px; color: var(--label-color);">Modo Oscuro</em>
+        <div class="header">
+            <h1>Generador de Código QR con Logo</h1>
+            <div class="theme-switch-wrapper">
+                <label class="theme-switch" for="checkbox">
+                    <input type="checkbox" id="checkbox" />
+                    <div class="slider round"></div>
+                </label>
+                <span style="margin-left: 10px; color: var(--label-color);">Modo Oscuro</span>
+            </div>
         </div>
-        <h1>Generador de Código QR con Logo</h1>
         <form action="/" method="post" enctype="multipart/form-data" id="qr-form">
             <label for="data">Introduce el texto o URL:</label>
             <input type="text" id="data" name="data" value="{{ data or '' }}" required>
