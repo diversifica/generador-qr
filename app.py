@@ -6,7 +6,7 @@ import base64
 
 app = Flask(__name__)
 
-# --- Plantilla HTML actualizada con Cropper.js y Modal ---
+# --- Plantilla HTML actualizada con Cropper.js, Modal y Modo Oscuro ---
 HMTL_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="es">
@@ -55,13 +55,12 @@ HMTL_TEMPLATE = """
         input[type="text"], input[type="file"] { width: calc(100% - 24px); padding: 12px; margin-bottom: 10px; border: 1px solid var(--input-border); border-radius: 6px; font-size: 16px; background-color: var(--input-bg); color: var(--text-color); transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease; }
         .color-selectors { display: flex; justify-content: center; gap: 20px; margin: 10px 0; }
         input[type="color"] { width: 50px; height: 50px; border: none; border-radius: 8px; cursor: pointer; }
-        input[type="submit"], .download-btn, #crop-button, #new-qr-button { color: white; padding: 12px 25px; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; text-decoration: none; display: inline-block; margin-top: 10px; margin-left: 5px; margin-right: 5px; transition: background-color 0.3s ease; }
+        .button-group { margin-top: 10px; display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; }
+        input[type="submit"], .download-btn, #crop-button, #new-qr-button, #generate-export-button { color: white; padding: 12px 25px; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; text-decoration: none; display: inline-block; transition: background-color 0.3s ease; }
         input[type="submit"], #crop-button { background-color: var(--button-primary-bg); }
         input[type="submit"]:hover, #crop-button:hover { background-color: var(--button-primary-hover-bg); }
-        .download-btn { background-color: var(--button-success-bg); }
-        .download-btn:hover { background-color: var(--button-success-hover-bg); }
-        #new-qr-button { background-color: var(--button-secondary-bg); }
-        #new-qr-button:hover { background-color: var(--button-secondary-hover-bg); }
+        .download-btn, #new-qr-button, #generate-export-button { background-color: var(--button-success-bg); }
+        .download-btn:hover, #new-qr-button:hover, #generate-export-button:hover { background-color: var(--button-success-hover-bg); }
 
         .qr-container {
             margin-top: 25px;
@@ -140,14 +139,17 @@ HMTL_TEMPLATE = """
             <input type="file" id="logo-input" accept="image/*">
             <!-- Campo oculto para guardar la imagen recortada en Base64 -->
             <input type="hidden" id="logo_base64" name="logo_base64">
-            <input type="submit" value="Generar QR">
-            <button type="button" id="new-qr-button">Nuevo QR</button>
+            <div class="button-group">
+                <button type="submit" id="generate-qr-button">Generar QR</button>
+                <button type="button" id="generate-export-button">Generar QR y Exportar</button>
+                <button type="button" id="new-qr-button">Nuevo QR</button>
+            </div>
         </form>
         <div class="qr-container" style="{% if not qr_image %}display: none;{% endif %}">
             {% if qr_image %}
                 <h2>Tu Código QR:</h2>
                 <img src="data:image/png;base64,{{ qr_image }}" alt="Código QR Generado">
-                <a href="data:image/png;base64,{{ qr_image }}" class="download-btn" download="codigo_qr.png">Descargar QR</a>
+                <a href="data:image/png;base64,{{ qr_image }}" class="download-btn" download="codigo_qr.png" id="actual-download-button">Descargar QR</a>
             {% endif %}
         </div>
     </div>
@@ -171,11 +173,16 @@ HMTL_TEMPLATE = """
         const cropButton = document.getElementById('crop-button');
         const hiddenInput = document.getElementById('logo_base64');
         const newQrButton = document.getElementById('new-qr-button');
+        const generateQrButton = document.getElementById('generate-qr-button');
+        const generateExportButton = document.getElementById('generate-export-button');
+        const actualDownloadButton = document.getElementById('actual-download-button');
         const qrContainer = document.querySelector('.qr-container');
         const themeToggle = document.getElementById('checkbox');
         const body = document.body;
+        const qrForm = document.getElementById('qr-form');
 
         let cropper;
+        let shouldExport = false; // Bandera para controlar la exportación
 
         // --- Lógica del Modo Oscuro ---
         const currentTheme = localStorage.getItem('theme');
@@ -242,10 +249,118 @@ HMTL_TEMPLATE = """
             logoInput.style.border = ''; // Quitar el feedback visual
             qrContainer.style.display = 'none'; // Ocultar el contenedor del QR
         });
+
+        // --- Lógica del botón Generar QR y Exportar ---
+        generateExportButton.addEventListener('click', () => {
+            shouldExport = true;
+            generateQrButton.click(); // Simular clic en el botón de generar
+        });
+
+        // Interceptar el envío del formulario para manejar la exportación
+        qrForm.addEventListener('submit', async (e) => {
+            e.preventDefault(); // Prevenir el envío normal del formulario
+
+            const formData = new FormData(qrForm);
+            const response = await fetch(qrForm.action, {
+                method: qrForm.method,
+                body: formData
+            });
+            const html = await response.text();
+
+            // Crear un elemento temporal para parsear el HTML y extraer el QR
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = html;
+            const newQrImageSrc = tempDiv.querySelector('.qr-container img')?.src;
+            const newDownloadLink = tempDiv.querySelector('.qr-container a')?.href;
+
+            if (newQrImageSrc) {
+                // Actualizar la imagen y el botón de descarga en la página actual
+                qrContainer.innerHTML = `
+                    <h2>Tu Código QR:</h2>
+                    <img src="${newQrImageSrc}" alt="Código QR Generado">
+                    <a href="${newDownloadLink}" class="download-btn" download="codigo_qr.png" id="actual-download-button">Descargar QR</a>
+                `;
+                qrContainer.style.display = 'flex';
+
+                if (shouldExport) {
+                    // Simular clic en el botón de descarga si shouldExport es true
+                    const downloadLinkElement = qrContainer.querySelector('#actual-download-button');
+                    if (downloadLinkElement) {
+                        downloadLinkElement.click();
+                    }
+                    shouldExport = false; // Resetear la bandera
+                }
+            } else {
+                // Manejar errores o mensajes del servidor
+                qrContainer.style.display = 'none';
+                alert("Error al generar el QR. Por favor, introduce datos válidos.");
+            }
+        });
     </script>
 </body>
 </html>
 """
+
+@app.route('/', methods=['GET', 'POST'])
+def index():
+    qr_image_base64 = None
+    data = request.form.get('data', '')
+    fill_color = request.form.get('fill_color', '#000000')
+    back_color = request.form.get('back_color', '#ffffff')
+
+    if request.method == 'POST':
+        if not data:
+            return render_template_string(HMTL_TEMPLATE, error="Por favor, introduce datos.")
+
+        # --- Lógica del Backend actualizada ---
+        # Ahora recibimos una cadena Base64 en lugar de un archivo.
+        logo_base64 = request.form.get('logo_base64')
+        
+        img_buffer = generate_qr_with_logo(data, fill_color, back_color, logo_base64)
+        
+        qr_image_base64 = base64.b64encode(img_buffer.getvalue()).decode('utf-8')
+
+    return render_template_string(HMTL_TEMPLATE, 
+                                  qr_image=qr_image_base64, 
+                                  data=data,
+                                  fill_color=fill_color,
+                                  back_color=back_color)
+
+def generate_qr_with_logo(data, fill_color, back_color, logo_base64=None):
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_H,
+        box_size=10,
+        border=4,
+    )
+    qr.add_data(data)
+    qr.make(fit=True)
+    img_qr = qr.make_image(fill_color=fill_color, back_color=back_color).convert('RGBA')
+
+    # Si se envió un logo en Base64, lo procesamos.
+    if logo_base64 and 'base64,' in logo_base64:
+        # Decodificar la cadena Base64 para obtener los bytes de la imagen
+        header, encoded = logo_base64.split(',', 1)
+        logo_data = base64.b64decode(encoded)
+        logo_image = Image.open(io.BytesIO(logo_data)).convert('RGBA')
+
+        qr_width, qr_height = img_qr.size
+        max_logo_size = qr_width // 4
+        logo_image.thumbnail((max_logo_size, max_logo_size))
+
+        logo_pos = ((qr_width - logo_image.width) // 2, (qr_height - logo_image.height) // 2)
+        
+        # Pegar el logo recortado
+        img_qr.paste(logo_image, logo_pos, mask=logo_image)
+
+    buf = io.BytesIO()
+    img_qr.save(buf, 'PNG')
+    buf.seek(0)
+    return buf
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000, debug=True)
+
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
