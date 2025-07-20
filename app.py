@@ -57,11 +57,11 @@ HMTL_TEMPLATE = """
         .color-selectors { display: flex; justify-content: center; gap: 20px; margin: 10px 0; }
         input[type="color"] { width: 50px; height: 50px; border: none; border-radius: 8px; cursor: pointer; }
         .button-group { margin-top: 10px; display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; }
-        input[type="submit"], .download-btn, #crop-button, #new-qr-button, #generate-export-button { color: white; padding: 12px 25px; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; text-decoration: none; display: inline-block; transition: background-color 0.3s ease; }
-        input[type="submit"], #crop-button { background-color: var(--button-primary-bg); }
-        input[type="submit"]:hover, #crop-button:hover { background-color: var(--button-primary-hover-bg); }
-        .download-btn, #new-qr-button, #generate-export-button { background-color: var(--button-success-bg); }
-        .download-btn:hover, #new-qr-button:hover, #generate-export-button:hover { background-color: var(--button-success-hover-bg); }
+        .btn { color: white; padding: 12px 25px; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; text-decoration: none; display: inline-block; transition: background-color 0.3s ease; }
+        .btn-primary { background-color: var(--button-primary-bg); }
+        .btn-primary:hover { background-color: var(--button-primary-hover-bg); }
+        .btn-success { background-color: var(--button-success-bg); }
+        .btn-success:hover { background-color: var(--button-success-hover-bg); }
 
         .qr-container {
             margin-top: 25px;
@@ -142,16 +142,16 @@ HMTL_TEMPLATE = """
             <!-- Campo oculto para guardar la imagen recortada en Base64 -->
             <input type="hidden" id="logo_base64" name="logo_base64">
             <div class="button-group">
-                <button type="submit" id="generate-qr-button">Generar QR</button>
-                <button type="button" id="generate-export-button">Generar QR y Exportar</button>
-                <button type="button" id="new-qr-button">Nuevo QR</button>
+                <button type="submit" id="generate-qr-button" class="btn btn-primary">Generar QR</button>
+                <button type="button" id="generate-export-button" class="btn btn-success">Generar QR y Exportar</button>
+                <button type="button" id="new-qr-button" class="btn btn-success">Nuevo QR</button>
             </div>
         </form>
         <div class="qr-container" style="{% if not qr_image %}display: none;{% endif %}">
             {% if qr_image %}
                 <h2>Tu Código QR:</h2>
                 <img src="data:image/png;base64,{{ qr_image }}" alt="Código QR Generado">
-                <a href="data:image/png;base64,{{ qr_image }}" class="download-btn" download="codigo_qr.png" id="actual-download-button">Descargar QR</a>
+                <a href="data:image/png;base64,{{ qr_image }}" class="btn btn-success download-btn" download="codigo_qr.png" id="actual-download-button">Descargar QR</a>
             {% endif %}
         </div>
     </div>
@@ -161,7 +161,7 @@ HMTL_TEMPLATE = """
         <div id="crop-container">
             <h2>Recortar Logo</h2>
             <div><img id="image-to-crop"></div>
-            <button type="button" id="crop-button">Confirmar Recorte</button>
+            <button type="button" id="crop-button" class="btn btn-primary">Confirmar Recorte</button>
         </div>
     </div>
 
@@ -280,7 +280,7 @@ HMTL_TEMPLATE = """
                 qrContainer.innerHTML = `
                     <h2>Tu Código QR:</h2>
                     <img src="${newQrImageSrc}" alt="Código QR Generado">
-                    <a href="${newDownloadLink}" class="download-btn" download="codigo_qr.png" id="actual-download-button">Descargar QR</a>
+                    <a href="${newDownloadLink}" class="btn btn-success download-btn" download="codigo_qr.png" id="actual-download-button">Descargar QR</a>
                 `;
                 qrContainer.style.display = 'flex';
 
