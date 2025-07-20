@@ -10,7 +10,8 @@ Una aplicación web simple y moderna construida con Flask para generar códigos 
 -   **Descarga Fácil:** Descarga el código QR resultante como un archivo de imagen PNG con un solo clic.
 -   **Soporte de Logo:** Añade una imagen de logo personalizada en el centro del código QR.
 -   **Recorte de Logo Integrado:** Herramienta de recorte de imágenes (Cropper.js) para asegurar que el logo se ajuste perfectamente y en formato cuadrado.
--   **Botón "Nuevo QR":** Limpia el formulario y oculta el QR generado para facilitar la creación de nuevos códigos.
+-   **Botón "Nuevo QR":** Limpia el formulario y oculta el QR generado para facilitar la creación de nuevos códigos. Ahora con un **color verde** para mayor coherencia visual.
+-   **Modo Oscuro:** Permite alternar entre un tema claro y oscuro, con la preferencia guardada localmente y un contraste adecuado en todos los elementos.
 -   **Experiencia de Usuario Mejorada:** Se ha corregido el "salto" de la interfaz al mostrar el QR y el botón de descarga, asegurando una experiencia fluida.
 -   **Interfaz Limpia:** Diseño de usuario sencillo, moderno y responsivo.
 -   **Contenerización:** Incluye un `Dockerfile` para un despliegue rápido y consistente usando Docker.
