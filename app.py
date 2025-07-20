@@ -45,7 +45,7 @@ HMTL_TEMPLATE = """
 </head>
 <body>
     <div class="container">
-        <h1>Generador de Código QR con Logo</h1>
+        <h1>Generador de Código QR</h1>
         <form action="/" method="post" enctype="multipart/form-data" id="qr-form">
             <label for="data">Introduce el texto o URL:</label>
             <input type="text" id="data" name="data" value="{{ data or '' }}" required>
