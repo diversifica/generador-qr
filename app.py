@@ -24,7 +24,7 @@ HMTL_TEMPLATE = """
         input[type="text"], input[type="file"] { width: calc(100% - 24px); padding: 12px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; }
         .color-selectors { display: flex; justify-content: center; gap: 20px; margin: 10px 0; }
         input[type="color"] { width: 50px; height: 50px; border: none; border-radius: 8px; cursor: pointer; }
-        input[type="submit"], .download-btn, #crop-button { background-color: #007bff; color: white; padding: 12px 25px; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; text-decoration: none; display: inline-block; margin-top: 10px; }
+        input[type="submit"], .download-btn, #crop-button, #new-qr-button { background-color: #007bff; color: white; padding: 12px 25px; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; text-decoration: none; display: inline-block; margin-top: 10px; margin-left: 5px; margin-right: 5px; }
         .qr-container {
             margin-top: 25px;
             min-height: 250px; /* Altura mínima para evitar el salto */
@@ -35,6 +35,8 @@ HMTL_TEMPLATE = """
         }
         img { max-width: 100%; height: auto; }
         .download-btn { background-color: #28a745; }
+        #new-qr-button { background-color: #6c757d; }
+        #new-qr-button:hover { background-color: #5a6268; }
         /* Estilos para el Modal de recorte */
         #crop-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center; }
         #crop-container { background: white; padding: 20px; border-radius: 8px; max-width: 90vw; max-height: 80vh; }
@@ -56,8 +58,9 @@ HMTL_TEMPLATE = """
             <!-- Campo oculto para guardar la imagen recortada en Base64 -->
             <input type="hidden" id="logo_base64" name="logo_base64">
             <input type="submit" value="Generar QR">
+            <button type="button" id="new-qr-button">Nuevo QR</button>
         </form>
-        <div class="qr-container">
+        <div class="qr-container" style="{% if not qr_image %}display: none;{% endif %}">
             {% if qr_image %}
                 <h2>Tu Código QR:</h2>
                 <img src="data:image/png;base64,{{ qr_image }}" alt="Código QR Generado">
@@ -84,6 +87,8 @@ HMTL_TEMPLATE = """
         const imageToCrop = document.getElementById('image-to-crop');
         const cropButton = document.getElementById('crop-button');
         const hiddenInput = document.getElementById('logo_base64');
+        const newQrButton = document.getElementById('new-qr-button');
+        const qrContainer = document.querySelector('.qr-container');
         let cropper;
 
         logoInput.addEventListener('change', (e) => {
@@ -119,6 +124,16 @@ HMTL_TEMPLATE = """
             cropper.destroy();
             // Opcional: mostrar un feedback de que el logo se cargó
             logoInput.style.border = '2px solid #28a745';
+        });
+
+        newQrButton.addEventListener('click', () => {
+            document.getElementById('data').value = '';
+            document.getElementById('fill_color').value = '#000000';
+            document.getElementById('back_color').value = '#ffffff';
+            document.getElementById('logo_base64').value = '';
+            logoInput.value = ''; // Limpiar el input de tipo file
+            logoInput.style.border = ''; // Quitar el feedback visual
+            qrContainer.style.display = 'none'; // Ocultar el contenedor del QR
         });
     </script>
 </body>
@@ -184,4 +199,5 @@ def generate_qr_with_logo(data, fill_color, back_color, logo_base64=None):
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
+
 
