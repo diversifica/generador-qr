@@ -17,14 +17,52 @@ HMTL_TEMPLATE = """
     <!-- CSS de Cropper.js -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background-color: #f0f2f5; }
-        .container { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); text-align: center; width: 90%; max-width: 500px; }
-        h1 { color: #333; }
-        label { font-weight: 500; color: #555; display: block; margin: 15px 0 5px; }
-        input[type="text"], input[type="file"] { width: calc(100% - 24px); padding: 12px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; }
+        :root {
+            --bg-color: #f0f2f5;
+            --container-bg: white;
+            --text-color: #333;
+            --label-color: #555;
+            --input-bg: white;
+            --input-border: #ccc;
+            --button-primary-bg: #007bff;
+            --button-primary-hover-bg: #0056b3;
+            --button-secondary-bg: #6c757d;
+            --button-secondary-hover-bg: #5a6268;
+            --button-success-bg: #28a745;
+            --button-success-hover-bg: #218838;
+            --box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        .dark-mode {
+            --bg-color: #2c2c2c;
+            --container-bg: #3a3a3a;
+            --text-color: #f0f0f0;
+            --label-color: #e0e0e0;
+            --input-bg: #4a4a4a;
+            --input-border: #666;
+            --button-primary-bg: #4a90e2;
+            --button-primary-hover-bg: #357bd8;
+            --button-secondary-bg: #555;
+            --button-secondary-hover-bg: #444;
+            --button-success-bg: #4CAF50;
+            --button-success-hover-bg: #45a049;
+            --box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background-color: var(--bg-color); transition: background-color 0.3s ease; }
+        .container { background: var(--container-bg); padding: 40px; border-radius: 12px; box-shadow: var(--box-shadow); text-align: center; width: 90%; max-width: 500px; transition: background-color 0.3s ease, box-shadow 0.3s ease; }
+        h1 { color: var(--text-color); transition: color 0.3s ease; }
+        label { font-weight: 500; color: var(--label-color); display: block; margin: 15px 0 5px; transition: color 0.3s ease; }
+        input[type="text"], input[type="file"] { width: calc(100% - 24px); padding: 12px; margin-bottom: 10px; border: 1px solid var(--input-border); border-radius: 6px; font-size: 16px; background-color: var(--input-bg); color: var(--text-color); transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease; }
         .color-selectors { display: flex; justify-content: center; gap: 20px; margin: 10px 0; }
         input[type="color"] { width: 50px; height: 50px; border: none; border-radius: 8px; cursor: pointer; }
-        input[type="submit"], .download-btn, #crop-button, #new-qr-button { background-color: #007bff; color: white; padding: 12px 25px; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; text-decoration: none; display: inline-block; margin-top: 10px; margin-left: 5px; margin-right: 5px; }
+        input[type="submit"], .download-btn, #crop-button, #new-qr-button { color: white; padding: 12px 25px; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; text-decoration: none; display: inline-block; margin-top: 10px; margin-left: 5px; margin-right: 5px; transition: background-color 0.3s ease; }
+        input[type="submit"], #crop-button { background-color: var(--button-primary-bg); }
+        input[type="submit"]:hover, #crop-button:hover { background-color: var(--button-primary-hover-bg); }
+        .download-btn { background-color: var(--button-success-bg); }
+        .download-btn:hover { background-color: var(--button-success-hover-bg); }
+        #new-qr-button { background-color: var(--button-secondary-bg); }
+        #new-qr-button:hover { background-color: var(--button-secondary-hover-bg); }
+
         .qr-container {
             margin-top: 25px;
             min-height: 250px; /* Altura mínima para evitar el salto */
@@ -34,18 +72,63 @@ HMTL_TEMPLATE = """
             justify-content: center;
         }
         img { max-width: 100%; height: auto; }
-        .download-btn { background-color: #28a745; }
-        #new-qr-button { background-color: #6c757d; }
-        #new-qr-button:hover { background-color: #5a6268; }
+        
         /* Estilos para el Modal de recorte */
         #crop-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center; }
-        #crop-container { background: white; padding: 20px; border-radius: 8px; max-width: 90vw; max-height: 80vh; }
+        #crop-container { background: var(--container-bg); padding: 20px; border-radius: 8px; max-width: 90vw; max-height: 80vh; transition: background-color 0.3s ease; }
         #image-to-crop { max-height: 60vh; }
+
+        /* Estilos para el deslizador de modo oscuro */
+        .theme-switch-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+        .theme-switch {
+            display: inline-block;
+            height: 34px;
+            position: relative;
+            width: 60px;
+        }
+        .theme-switch input { display:none; }
+        .slider {
+            background-color: #ccc;
+            bottom: 0;
+            cursor: pointer;
+            left: 0;
+            position: absolute;
+            right: 0;
+            top: 0;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        .slider:before {
+            background-color: #fff;
+            bottom: 4px;
+            content: "";
+            height: 26px;
+            left: 4px;
+            position: absolute;
+            transition: .4s;
+            width: 26px;
+            border-radius: 50%;
+        }
+        input:checked + .slider { background-color: #2196F3; }
+        input:checked + .slider:before { transform: translateX(26px); }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Generador de Código QR</h1>
+        <div class="theme-switch-wrapper">
+            <label class="theme-switch" for="checkbox">
+                <input type="checkbox" id="checkbox" />
+                <div class="slider round"></div>
+            </label>
+            <em style="margin-left: 10px; color: var(--label-color);">Modo Oscuro</em>
+        </div>
+        <h1>Generador de Código QR con Logo</h1>
         <form action="/" method="post" enctype="multipart/form-data" id="qr-form">
             <label for="data">Introduce el texto o URL:</label>
             <input type="text" id="data" name="data" value="{{ data or '' }}" required>
@@ -89,8 +172,31 @@ HMTL_TEMPLATE = """
         const hiddenInput = document.getElementById('logo_base64');
         const newQrButton = document.getElementById('new-qr-button');
         const qrContainer = document.querySelector('.qr-container');
+        const themeToggle = document.getElementById('checkbox');
+        const body = document.body;
+
         let cropper;
 
+        // --- Lógica del Modo Oscuro ---
+        const currentTheme = localStorage.getItem('theme');
+        if (currentTheme === 'dark' || !currentTheme) { // Modo oscuro por defecto
+            body.classList.add('dark-mode');
+            themeToggle.checked = true;
+        } else {
+            themeToggle.checked = false;
+        }
+
+        themeToggle.addEventListener('change', () => {
+            if (themeToggle.checked) {
+                body.classList.add('dark-mode');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                body.classList.remove('dark-mode');
+                localStorage.setItem('theme', 'light');
+            }
+        });
+
+        // --- Lógica de Cropper.js ---
         logoInput.addEventListener('change', (e) => {
             const files = e.target.files;
             if (files && files.length > 0) {
@@ -123,9 +229,10 @@ HMTL_TEMPLATE = """
             modal.style.display = 'none';
             cropper.destroy();
             // Opcional: mostrar un feedback de que el logo se cargó
-            logoInput.style.border = '2px solid #28a745';
+            logoInput.style.border = '2px solid var(--button-success-bg)';
         });
 
+        // --- Lógica del botón Nuevo QR ---
         newQrButton.addEventListener('click', () => {
             document.getElementById('data').value = '';
             document.getElementById('fill_color').value = '#000000';
