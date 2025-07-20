@@ -25,7 +25,14 @@ HMTL_TEMPLATE = """
         .color-selectors { display: flex; justify-content: center; gap: 20px; margin: 10px 0; }
         input[type="color"] { width: 50px; height: 50px; border: none; border-radius: 8px; cursor: pointer; }
         input[type="submit"], .download-btn, #crop-button { background-color: #007bff; color: white; padding: 12px 25px; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; text-decoration: none; display: inline-block; margin-top: 10px; }
-        .qr-container { margin-top: 25px; }
+        .qr-container {
+            margin-top: 25px;
+            min-height: 250px; /* Altura mínima para evitar el salto */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
         img { max-width: 100%; height: auto; }
         .download-btn { background-color: #28a745; }
         /* Estilos para el Modal de recorte */
@@ -36,7 +43,7 @@ HMTL_TEMPLATE = """
 </head>
 <body>
     <div class="container">
-        <h1>Generador de Código QR</h1>
+        <h1>Generador de Código QR con Logo</h1>
         <form action="/" method="post" enctype="multipart/form-data" id="qr-form">
             <label for="data">Introduce el texto o URL:</label>
             <input type="text" id="data" name="data" value="{{ data or '' }}" required>
@@ -50,13 +57,13 @@ HMTL_TEMPLATE = """
             <input type="hidden" id="logo_base64" name="logo_base64">
             <input type="submit" value="Generar QR">
         </form>
-        {% if qr_image %}
-            <div class="qr-container">
+        <div class="qr-container">
+            {% if qr_image %}
                 <h2>Tu Código QR:</h2>
                 <img src="data:image/png;base64,{{ qr_image }}" alt="Código QR Generado">
                 <a href="data:image/png;base64,{{ qr_image }}" class="download-btn" download="codigo_qr.png">Descargar QR</a>
-            </div>
-        {% endif %}
+            {% endif %}
+        </div>
     </div>
 
     <!-- Modal para recortar la imagen -->
@@ -177,3 +184,4 @@ def generate_qr_with_logo(data, fill_color, back_color, logo_base64=None):
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
+
