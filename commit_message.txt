@@ -1,0 +1,9 @@
+feat: Implementar recorte de logos con Cropper.js
+
+Se añade un editor de imágenes en el frontend para permitir a los usuarios recortar el logo a un formato cuadrado (1:1) antes de subirlo.
+
+Cambios principales:
+- **Integración de Cropper.js:** Se añade la librería y sus estilos desde una CDN para la manipulación de imágenes en el cliente.
+- **Modal de Recorte:** Al seleccionar una imagen, se abre una ventana modal con una interfaz de recorte.
+- **Flujo de Frontend:** El logo recortado se convierte a Base64 y se envía al servidor a través de un campo oculto, optimizando el proceso al no subir el archivo original.
+- **Ajuste del Backend:** El servidor ahora recibe la imagen recortada como una cadena Base64, la decodifica y la integra en el código QR.
