@@ -1,24 +1,29 @@
 # Generador de Códigos QR
 
-Una aplicación web simple y moderna construida con Flask para generar códigos QR personalizados. Permite a los usuarios crear códigos QR a partir de texto o URLs, personalizar sus colores y descargarlos fácilmente.
+Una aplicación web simple y moderna construida con Flask para generar códigos QR personalizados. Permite a los usuarios crear códigos QR a partir de texto o URLs, personalizar sus colores, añadir logos y descargarlos fácilmente.
 
 ## ✨ Funcionalidades
 
-- **Generación de QR:** Crea códigos QR a partir de cualquier texto o URL.
-- **Personalización de Color:** Elige el color de los módulos del QR y el color del fondo usando selectores de color intuitivos.
-- **Previsualización Integrada:** El código QR generado se muestra instantáneamente en la misma página.
-- **Descarga Fácil:** Descarga el código QR resultante como un archivo de imagen PNG con un solo clic.
-- **Interfaz Limpia:** Diseño de usuario sencillo, moderno y responsivo.
-- **Contenerización:** Incluye un `Dockerfile` para un despliegue rápido y consistente usando Docker.
+-   **Generación de QR:** Crea códigos QR a partir de cualquier texto o URL.
+-   **Personalización de Color:** Elige el color de los módulos del QR y el color del fondo usando selectores de color intuitivos.
+-   **Previsualización Integrada:** El código QR generado se muestra instantáneamente en la misma página.
+-   **Descarga Fácil:** Descarga el código QR resultante como un archivo de imagen PNG con un solo clic.
+-   **Soporte de Logo:** Añade una imagen de logo personalizada en el centro del código QR.
+-   **Recorte de Logo Integrado:** Herramienta de recorte de imágenes (Cropper.js) para asegurar que el logo se ajuste perfectamente y en formato cuadrado.
+-   **Botón "Nuevo QR":** Limpia el formulario y oculta el QR generado para facilitar la creación de nuevos códigos.
+-   **Experiencia de Usuario Mejorada:** Se ha corregido el "salto" de la interfaz al mostrar el QR y el botón de descarga, asegurando una experiencia fluida.
+-   **Interfaz Limpia:** Diseño de usuario sencillo, moderno y responsivo.
+-   **Contenerización:** Incluye un `Dockerfile` para un despliegue rápido y consistente usando Docker.
 
 ## 🛠️ Tecnologías Utilizadas
 
-- **Backend:** Python 3.9+
-- **Framework:** Flask
-- **Generación de QR:** `qrcode` y `Pillow`
-- **Servidor WSGI:** Gunicorn
-- **Frontend:** HTML5, CSS3
-- **Contenerización:** Docker
+-   **Backend:** Python 3.9+
+-   **Framework:** Flask
+-   **Generación de QR:** `qrcode` y `Pillow`
+-   **Servidor WSGI:** Gunicorn
+-   **Frontend:** HTML5, CSS3, JavaScript
+-   **Recorte de Imagen:** Cropper.js
+-   **Contenerización:** Docker
 
 ## 🚀 Cómo Empezar
 
@@ -27,7 +32,7 @@ Puedes ejecutar este proyecto de dos maneras: usando Docker (recomendado para un
 ### Opción 1: Usando Docker (Recomendado)
 
 **Requisitos:**
-- [Docker](https://www.docker.com/get-started) instalado en tu sistema.
+-   [Docker](https://www.docker.com/get-started) instalado en tu sistema.
 
 **Pasos:**
 
@@ -55,8 +60,8 @@ Puedes ejecutar este proyecto de dos maneras: usando Docker (recomendado para un
 ### Opción 2: Ejecución Local (Para Desarrollo)
 
 **Requisitos:**
-- Python 3.9 o superior.
-- `pip` (el gestor de paquetes de Python).
+-   Python 3.9 o superior.
+-   `pip` (el gestor de paquetes de Python).
 
 **Pasos:**
 
