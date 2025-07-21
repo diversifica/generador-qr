@@ -331,6 +331,145 @@ HMTL_TEMPLATE = """
 </body>
 </html>
 """
+
+# Plantilla para editar la redirección con el mismo estilo y modo oscuro
+EDIT_TEMPLATE = """
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar redirección</title>
+    <style>
+        :root {
+            --bg-color: #f0f2f5;
+            --container-bg: white;
+            --text-color: #333;
+            --label-color: #555;
+            --input-bg: white;
+            --input-border: #ccc;
+            --button-primary-bg: #007bff;
+            --button-primary-hover-bg: #0056b3;
+            --button-secondary-bg: #6c757d;
+            --button-secondary-hover-bg: #5a6268;
+            --box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        .dark-mode {
+            --bg-color: #1a1a1a;
+            --container-bg: #242424;
+            --text-color: #f8f8f8;
+            --label-color: #cccccc;
+            --input-bg: #333333;
+            --input-border: #555555;
+            --button-primary-bg: #2979ff;
+            --button-primary-hover-bg: #1565c0;
+            --button-secondary-bg: #555;
+            --button-secondary-hover-bg: #444;
+            --box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: var(--bg-color);
+            transition: background-color 0.3s ease;
+        }
+        .container {
+            background: var(--container-bg);
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: var(--box-shadow);
+            width: 90%;
+            max-width: 500px;
+        }
+        label {
+            display: block;
+            margin-bottom: 10px;
+            color: var(--label-color);
+        }
+        input[type="text"] {
+            width: calc(100% - 24px);
+            padding: 12px;
+            border: 1px solid var(--input-border);
+            border-radius: 6px;
+            background: var(--input-bg);
+            color: var(--text-color);
+        }
+        .button-group {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .btn {
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .btn-primary { background-color: var(--button-primary-bg); }
+        .btn-primary:hover { background-color: var(--button-primary-hover-bg); }
+        .btn-secondary { background-color: var(--button-secondary-bg); }
+        .btn-secondary:hover { background-color: var(--button-secondary-hover-bg); }
+        .theme-switch-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            margin-bottom: 20px;
+        }
+        .theme-switch { position: relative; display: inline-block; width: 60px; height: 34px; }
+        .theme-switch input { display:none; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 26px; width: 26px; left: 4px; bottom: 4px; background-color: #fff; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: #2196F3; }
+        input:checked + .slider:before { transform: translateX(26px); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="theme-switch-wrapper">
+            <label class="theme-switch" for="checkbox">
+                <input type="checkbox" id="checkbox" />
+                <div class="slider round"></div>
+            </label>
+        </div>
+        <h2 style="margin-top:0; color: var(--text-color);">Editar redirección</h2>
+        <form method="post">
+            <label for="data">Nueva dirección:</label>
+            <input type="text" id="data" name="data" value="{{ data }}" required>
+            <div class="button-group">
+                <button type="submit" class="btn btn-primary">Guardar</button>
+                <a href="#" onclick="history.back(); return false;" class="btn btn-secondary">Volver</a>
+            </div>
+        </form>
+    </div>
+    <script>
+        const themeToggle = document.getElementById('checkbox');
+        const body = document.body;
+        const currentTheme = localStorage.getItem('theme');
+        if (currentTheme === 'dark' || !currentTheme) {
+            body.classList.add('dark-mode');
+            themeToggle.checked = true;
+        }
+        themeToggle.addEventListener('change', () => {
+            if (themeToggle.checked) {
+                body.classList.add('dark-mode');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                body.classList.remove('dark-mode');
+                localStorage.setItem('theme', 'light');
+            }
+        });
+    </script>
+</body>
+</html>
+"""
+
 @app.route('/', methods=['GET', 'POST'])
 def index():
     qr_image_base64 = None
@@ -422,15 +561,8 @@ def edit_dynamic(qr_id):
         new_data = request.form.get('data', '')
         dynamic_data[qr_id] = new_data
         save_dynamic_data(dynamic_data)
-        return redirect(url_for('edit_dynamic', qr_id=qr_id))
-    edit_template = """
-    <h2>Editar redirección</h2>
-    <form method='post'>
-        <input type='text' name='data' value='{{ data }}' style='width:300px;'>
-        <button type='submit'>Guardar</button>
-    </form>
-    """
-    return render_template_string(edit_template, data=dynamic_data[qr_id])
+        return redirect(request.referrer or url_for('index'))
+    return render_template_string(EDIT_TEMPLATE, data=dynamic_data[qr_id])
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
