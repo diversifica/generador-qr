@@ -10,6 +10,7 @@ import uuid
 app = Flask(__name__)
 
 DYNAMIC_DATA_FILE = 'dynamic_qrs.json'
+DESIGNS_FILE = 'qr_designs.json'
 
 
 def load_dynamic_data():
@@ -24,6 +25,21 @@ def load_dynamic_data():
 
 def save_dynamic_data(data):
     with open(DYNAMIC_DATA_FILE, 'w') as f:
+        json.dump(data, f)
+
+
+def load_designs():
+    if os.path.exists(DESIGNS_FILE):
+        with open(DESIGNS_FILE, 'r') as f:
+            try:
+                return json.load(f)
+            except json.JSONDecodeError:
+                return {}
+    return {}
+
+
+def save_designs(data):
+    with open(DESIGNS_FILE, 'w') as f:
         json.dump(data, f)
 
 # --- Plantilla HTML actualizada con Cropper.js, Modal y Modo Oscuro ---
@@ -157,6 +173,18 @@ HMTL_TEMPLATE = """
                 <div><label for="fill_color">Color QR:</label><input type="color" id="fill_color" name="fill_color" value="{{ fill_color or '#000000' }}"></div>
                 <div><label for="back_color">Fondo:</label><input type="color" id="back_color" name="back_color" value="{{ back_color or '#ffffff' }}"></div>
             </div>
+            <label for="design-select">Usar diseño guardado:</label>
+            <select id="design-select">
+                <option value="">-- Seleccionar --</option>
+                {% for name in designs %}
+                <option value="{{ name }}">{{ name }}</option>
+                {% endfor %}
+            </select>
+
+            <label for="design-name">Guardar diseño como:</label>
+            <input type="text" id="design-name" placeholder="Nombre del diseño">
+            <button type="button" id="save-design-button" class="btn btn-secondary">Guardar Diseño</button>
+
             <label for="logo-input">Logo (opcional, se recortará a formato cuadrado):</label>
             <input type="file" id="logo-input" accept="image/*">
             <!-- Campo oculto para guardar la imagen recortada en Base64 -->
@@ -209,6 +237,10 @@ HMTL_TEMPLATE = """
         const themeToggle = document.getElementById('checkbox');
         const body = document.body;
         const qrForm = document.getElementById('qr-form');
+        const designSelect = document.getElementById('design-select');
+        const designNameInput = document.getElementById('design-name');
+        const saveDesignButton = document.getElementById('save-design-button');
+        const designs = {{ designs_json | safe }};
 
         let cropper;
         let shouldExport = false; // Bandera para controlar la exportación
@@ -265,8 +297,52 @@ HMTL_TEMPLATE = """
             modal.style.display = 'none';
             cropper.destroy();
             // Opcional: mostrar un feedback de que el logo se cargó
-            logoInput.style.border = '2px solid var(--button-success-bg)';
+        logoInput.style.border = '2px solid var(--button-success-bg)';
         });
+
+        // --- Cargar diseño seleccionado ---
+        if (designSelect) {
+            designSelect.addEventListener('change', () => {
+                const name = designSelect.value;
+                if (designs[name]) {
+                    document.getElementById('fill_color').value = designs[name].fill_color || '#000000';
+                    document.getElementById('back_color').value = designs[name].back_color || '#ffffff';
+                    hiddenInput.value = designs[name].logo_base64 || '';
+                }
+            });
+        }
+
+        // --- Guardar diseño actual ---
+        if (saveDesignButton) {
+            saveDesignButton.addEventListener('click', async () => {
+                const name = designNameInput.value.trim();
+                if (!name) {
+                    alert('Debes proporcionar un nombre para el diseño');
+                    return;
+                }
+                const formData = new FormData();
+                formData.append('name', name);
+                formData.append('fill_color', document.getElementById('fill_color').value);
+                formData.append('back_color', document.getElementById('back_color').value);
+                formData.append('logo_base64', hiddenInput.value);
+                const resp = await fetch('/save_design', { method: 'POST', body: formData });
+                if (resp.ok) {
+                    designs[name] = {
+                        fill_color: formData.get('fill_color'),
+                        back_color: formData.get('back_color'),
+                        logo_base64: formData.get('logo_base64')
+                    };
+                    const option = document.createElement('option');
+                    option.value = name;
+                    option.textContent = name;
+                    designSelect.appendChild(option);
+                    designNameInput.value = '';
+                    alert('Diseño guardado');
+                } else {
+                    alert('Error al guardar el diseño');
+                }
+            });
+        }
 
         // --- Lógica del botón Nuevo QR ---
         newQrButton.addEventListener('click', () => {
@@ -473,6 +549,7 @@ EDIT_TEMPLATE = """
 @app.route('/', methods=['GET', 'POST'])
 def index():
     qr_image_base64 = None
+    designs = load_designs()
     data = request.form.get('data', '')
     fill_color = request.form.get('fill_color', '#000000')
     back_color = request.form.get('back_color', '#ffffff')
@@ -520,7 +597,7 @@ def index():
             qr_content = url_for('redirect_dynamic', qr_id=dynamic_id, _external=True)
 
         img_buffer = generate_qr_with_logo(qr_content, fill_color, back_color, logo_base64)
-        
+
         qr_image_base64 = base64.b64encode(img_buffer.getvalue()).decode('utf-8')
 
     return render_template_string(
@@ -531,6 +608,8 @@ def index():
         back_color=back_color,
         dynamic_id=dynamic_id,
         dynamic=dynamic,
+        designs=designs,
+        designs_json=json.dumps(designs),
     )
 
 def generate_qr_with_logo(data, fill_color, back_color, logo_base64=None):
@@ -564,6 +643,24 @@ def generate_qr_with_logo(data, fill_color, back_color, logo_base64=None):
     img_qr.save(buf, 'PNG')
     buf.seek(0)
     return buf
+
+
+@app.route('/save_design', methods=['POST'])
+def save_design():
+    name = request.form.get('name')
+    fill_color = request.form.get('fill_color', '#000000')
+    back_color = request.form.get('back_color', '#ffffff')
+    logo_base64 = request.form.get('logo_base64')
+    if not name:
+        return 'Nombre requerido', 400
+    designs = load_designs()
+    designs[name] = {
+        'fill_color': fill_color,
+        'back_color': back_color,
+        'logo_base64': logo_base64,
+    }
+    save_designs(designs)
+    return 'ok'
 
 
 @app.route('/r/<qr_id>')
