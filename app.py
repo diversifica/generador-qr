@@ -1,10 +1,30 @@
-from flask import Flask, request, render_template_string
+from flask import Flask, request, render_template_string, redirect, url_for
 import qrcode
 from PIL import Image
 import io
 import base64
+import os
+import json
+import uuid
 
 app = Flask(__name__)
+
+DYNAMIC_DATA_FILE = 'dynamic_qrs.json'
+
+
+def load_dynamic_data():
+    if os.path.exists(DYNAMIC_DATA_FILE):
+        with open(DYNAMIC_DATA_FILE, 'r') as f:
+            try:
+                return json.load(f)
+            except json.JSONDecodeError:
+                return {}
+    return {}
+
+
+def save_dynamic_data(data):
+    with open(DYNAMIC_DATA_FILE, 'w') as f:
+        json.dump(data, f)
 
 # --- Plantilla HTML actualizada con Cropper.js, Modal y Modo Oscuro ---
 HMTL_TEMPLATE = """
@@ -141,6 +161,10 @@ HMTL_TEMPLATE = """
             <input type="file" id="logo-input" accept="image/*">
             <!-- Campo oculto para guardar la imagen recortada en Base64 -->
             <input type="hidden" id="logo_base64" name="logo_base64">
+            <label style="margin-top:10px;">
+                <input type="checkbox" id="dynamic" name="dynamic" {% if dynamic %}checked{% endif %}>
+                QR dinámico (redirección editable)
+            </label>
             <div class="button-group">
                 <button type="submit" id="generate-qr-button" class="btn btn-primary">Generar QR</button>
                 <button type="button" id="generate-export-button" class="btn btn-success">Generar QR y Exportar</button>
@@ -152,6 +176,9 @@ HMTL_TEMPLATE = """
                 <h2>Tu Código QR:</h2>
                 <img src="data:image/png;base64,{{ qr_image }}" alt="Código QR Generado">
                 <a href="data:image/png;base64,{{ qr_image }}" class="btn btn-success download-btn" download="codigo_qr.png" id="actual-download-button">Descargar QR</a>
+                {% if dynamic_id %}
+                    <a href="{{ url_for('edit_dynamic', qr_id=dynamic_id) }}" class="btn btn-secondary edit-link">Editar redirección</a>
+                {% endif %}
             {% endif %}
         </div>
     </div>
@@ -273,7 +300,8 @@ HMTL_TEMPLATE = """
             const tempDiv = document.createElement('div');
             tempDiv.innerHTML = html;
             const newQrImageSrc = tempDiv.querySelector('.qr-container img')?.src;
-            const newDownloadLink = tempDiv.querySelector('.qr-container a')?.href;
+            const newDownloadLink = tempDiv.querySelector('.qr-container a.download-btn')?.href;
+            const newEditLink = tempDiv.querySelector('.qr-container a.edit-link')?.href;
 
             if (newQrImageSrc) {
                 // Actualizar la imagen y el botón de descarga en la página actual
@@ -281,6 +309,7 @@ HMTL_TEMPLATE = """
                     <h2>Tu Código QR:</h2>
                     <img src="${newQrImageSrc}" alt="Código QR Generado">
                     <a href="${newDownloadLink}" class="btn btn-success download-btn" download="codigo_qr.png" id="actual-download-button">Descargar QR</a>
+                    ${newEditLink ? `<a href="${newEditLink}" class="btn btn-secondary edit-link">Editar redirección</a>` : ''}
                 `;
                 qrContainer.style.display = 'flex';
 
@@ -308,6 +337,8 @@ def index():
     data = request.form.get('data', '')
     fill_color = request.form.get('fill_color', '#000000')
     back_color = request.form.get('back_color', '#ffffff')
+    dynamic = bool(request.form.get('dynamic'))
+    dynamic_id = None
 
     if request.method == 'POST':
         if not data:
@@ -316,16 +347,28 @@ def index():
         # --- Lógica del Backend actualizada ---
         # Ahora recibimos una cadena Base64 en lugar de un archivo.
         logo_base64 = request.form.get('logo_base64')
-        
-        img_buffer = generate_qr_with_logo(data, fill_color, back_color, logo_base64)
+
+        qr_content = data
+        if dynamic:
+            dynamic_id = str(uuid.uuid4())
+            stored = load_dynamic_data()
+            stored[dynamic_id] = data
+            save_dynamic_data(stored)
+            qr_content = url_for('redirect_dynamic', qr_id=dynamic_id, _external=True)
+
+        img_buffer = generate_qr_with_logo(qr_content, fill_color, back_color, logo_base64)
         
         qr_image_base64 = base64.b64encode(img_buffer.getvalue()).decode('utf-8')
 
-    return render_template_string(HMTL_TEMPLATE, 
-                                  qr_image=qr_image_base64, 
-                                  data=data,
-                                  fill_color=fill_color,
-                                  back_color=back_color)
+    return render_template_string(
+        HMTL_TEMPLATE,
+        qr_image=qr_image_base64,
+        data=data,
+        fill_color=fill_color,
+        back_color=back_color,
+        dynamic_id=dynamic_id,
+        dynamic=dynamic,
+    )
 
 def generate_qr_with_logo(data, fill_color, back_color, logo_base64=None):
     qr = qrcode.QRCode(
@@ -358,6 +401,36 @@ def generate_qr_with_logo(data, fill_color, back_color, logo_base64=None):
     img_qr.save(buf, 'PNG')
     buf.seek(0)
     return buf
+
+
+@app.route('/r/<qr_id>')
+def redirect_dynamic(qr_id):
+    data = load_dynamic_data().get(qr_id)
+    if not data:
+        return 'Código QR no encontrado', 404
+    if data.startswith('http://') or data.startswith('https://'):
+        return redirect(data)
+    return data
+
+
+@app.route('/edit/<qr_id>', methods=['GET', 'POST'])
+def edit_dynamic(qr_id):
+    dynamic_data = load_dynamic_data()
+    if qr_id not in dynamic_data:
+        return 'Código QR no encontrado', 404
+    if request.method == 'POST':
+        new_data = request.form.get('data', '')
+        dynamic_data[qr_id] = new_data
+        save_dynamic_data(dynamic_data)
+        return redirect(url_for('edit_dynamic', qr_id=qr_id))
+    edit_template = """
+    <h2>Editar redirección</h2>
+    <form method='post'>
+        <input type='text' name='data' value='{{ data }}' style='width:300px;'>
+        <button type='submit'>Guardar</button>
+    </form>
+    """
+    return render_template_string(edit_template, data=dynamic_data[qr_id])
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
