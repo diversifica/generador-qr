@@ -486,11 +486,15 @@ def index():
             data = info.get('data', '')
             fill_color = info.get('fill_color', fill_color)
             back_color = info.get('back_color', back_color)
+            logo_base64 = info.get('logo_base64')
         elif isinstance(info, str):
             data = info
+            logo_base64 = None
+        else:
+            logo_base64 = None
         if info:
             qr_content = url_for('redirect_dynamic', qr_id=dynamic_id, _external=True)
-            img_buffer = generate_qr_with_logo(qr_content, fill_color, back_color)
+            img_buffer = generate_qr_with_logo(qr_content, fill_color, back_color, logo_base64)
             qr_image_base64 = base64.b64encode(img_buffer.getvalue()).decode('utf-8')
             dynamic = True
 
@@ -510,6 +514,7 @@ def index():
                 "data": data,
                 "fill_color": fill_color,
                 "back_color": back_color,
+                "logo_base64": logo_base64,
             }
             save_dynamic_data(stored)
             qr_content = url_for('redirect_dynamic', qr_id=dynamic_id, _external=True)
