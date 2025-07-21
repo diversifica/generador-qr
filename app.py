@@ -444,7 +444,7 @@ EDIT_TEMPLATE = """
             <input type="text" id="data" name="data" value="{{ data }}" required>
             <div class="button-group">
                 <button type="submit" class="btn btn-primary">Guardar</button>
-                <a href="#" onclick="history.back(); return false;" class="btn btn-secondary">Volver</a>
+                <a href="{{ url_for('index', qr_id=qr_id) }}" class="btn btn-secondary">Volver</a>
             </div>
         </form>
     </div>
@@ -477,7 +477,22 @@ def index():
     fill_color = request.form.get('fill_color', '#000000')
     back_color = request.form.get('back_color', '#ffffff')
     dynamic = bool(request.form.get('dynamic'))
-    dynamic_id = None
+    dynamic_id = request.args.get('qr_id')
+
+    if dynamic_id and request.method == 'GET':
+        stored = load_dynamic_data()
+        info = stored.get(dynamic_id)
+        if isinstance(info, dict):
+            data = info.get('data', '')
+            fill_color = info.get('fill_color', fill_color)
+            back_color = info.get('back_color', back_color)
+        elif isinstance(info, str):
+            data = info
+        if info:
+            qr_content = url_for('redirect_dynamic', qr_id=dynamic_id, _external=True)
+            img_buffer = generate_qr_with_logo(qr_content, fill_color, back_color)
+            qr_image_base64 = base64.b64encode(img_buffer.getvalue()).decode('utf-8')
+            dynamic = True
 
     if request.method == 'POST':
         if not data:
@@ -491,7 +506,11 @@ def index():
         if dynamic:
             dynamic_id = str(uuid.uuid4())
             stored = load_dynamic_data()
-            stored[dynamic_id] = data
+            stored[dynamic_id] = {
+                "data": data,
+                "fill_color": fill_color,
+                "back_color": back_color,
+            }
             save_dynamic_data(stored)
             qr_content = url_for('redirect_dynamic', qr_id=dynamic_id, _external=True)
 
@@ -544,9 +563,13 @@ def generate_qr_with_logo(data, fill_color, back_color, logo_base64=None):
 
 @app.route('/r/<qr_id>')
 def redirect_dynamic(qr_id):
-    data = load_dynamic_data().get(qr_id)
-    if not data:
+    entry = load_dynamic_data().get(qr_id)
+    if not entry:
         return 'Código QR no encontrado', 404
+    if isinstance(entry, dict):
+        data = entry.get('data', '')
+    else:
+        data = entry
     if data.startswith('http://') or data.startswith('https://'):
         return redirect(data)
     return data
@@ -559,10 +582,17 @@ def edit_dynamic(qr_id):
         return 'Código QR no encontrado', 404
     if request.method == 'POST':
         new_data = request.form.get('data', '')
-        dynamic_data[qr_id] = new_data
+        entry = dynamic_data.get(qr_id, {})
+        if isinstance(entry, dict):
+            entry['data'] = new_data
+            dynamic_data[qr_id] = entry
+        else:
+            dynamic_data[qr_id] = new_data
         save_dynamic_data(dynamic_data)
-        return redirect(request.referrer or url_for('index'))
-    return render_template_string(EDIT_TEMPLATE, data=dynamic_data[qr_id])
+        return redirect(url_for('index', qr_id=qr_id))
+    entry = dynamic_data[qr_id]
+    current_data = entry.get('data') if isinstance(entry, dict) else entry
+    return render_template_string(EDIT_TEMPLATE, data=current_data, qr_id=qr_id)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
