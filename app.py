@@ -159,7 +159,7 @@ HMTL_TEMPLATE = """
 <body>
     <div class="container">
         <div class="header">
-            <h1>Generador de Código QR con Logo</h1>
+            <h1>Generador de Código QR con Logo v.1</h1>
             <div class="theme-switch-wrapper">
                 <label class="theme-switch" for="checkbox">
                     <input type="checkbox" id="checkbox" />
