@@ -98,6 +98,8 @@ HMTL_TEMPLATE = """
         .btn-primary:hover { background-color: var(--button-primary-hover-bg); }
         .btn-success { background-color: var(--button-success-bg); }
         .btn-success:hover { background-color: var(--button-success-hover-bg); }
+        .btn-secondary { background-color: var(--button-secondary-bg); }
+        .btn-secondary:hover { background-color: var(--button-secondary-hover-bg); }
 
         .qr-container {
             margin-top: 25px;
